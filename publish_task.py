@@ -11,39 +11,27 @@ from concurrent.futures import as_completed
 from concurrent.futures import wait
 from concurrent.futures import ALL_COMPLETED
 
+# 数据库操作
 client = pymongo.MongoClient(host='localhost', port=27017)
 db = client['stress_test']
 task_col = db['tasks']
 result_col = db['results']
 
-# ---test url---
-# url_new = "http://10.23.170.16:8964/api/v2/task/new"
-# url_result = "http://10.23.170.16:8964/api/v2/result"
-
-# ---Intranet url---
-# url_new = "http://edge-diagnostic-live.bilibili.co/api/v2/task/new"
-# url_result = "http://edge-diagnostic-live.bilibili.co/api/v2/result"
-
-# ---Public network url---
-url_new = "http://edge-diagnostic-live.bilivideo.com/api/v2/task/new"
-url_result = "http://edge-diagnostic-live.bilivideo.com/api/v2/result"
+# 测试的url/header等信息
+url_new = "http://baidu.com/"
+url_result = "http://baidu.com/"
 headers = {'content-type': 'text/plain; charset=utf-8'}
 payload = {'instance': {
     'ip': '125.121.107.71',
     'isp': '电信',
     'country': '中国',
     'province': '浙江',
-    'city': '杭州',
-    'latitude': '29.811436',
-    'longitude': '119.672424',
-    'provider': 'mcdn',
-    'version': '1.0.7',
-    'heartbeat': '2020-11-23T09:33:48.701000',
-    'id': '5fbb5e1886d1b813f9bcbf63'
+    'city': '杭州'
 }
 }
 
 
+# 处理json的类
 class MyEncoder(json.JSONEncoder):
 
     def default(self, obj):
@@ -55,6 +43,7 @@ class MyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
+# 处理任务的类
 class TaskManager(object):
 
     def __init__(self):
@@ -140,6 +129,7 @@ class TaskManager(object):
         return res
 
 
+# 测试接口一的qps
 def get_create_task_qps():
     data = json.dumps(payload, cls=MyEncoder, indent=4)
     start_tick = datetime.datetime.now()
@@ -156,6 +146,7 @@ def get_create_task_qps():
     return i
 
 
+# 测试接口二的qps
 def get_callback_task_qps():
     query_args = {}
     projection_fields = {'_id': False}
@@ -175,6 +166,7 @@ def get_callback_task_qps():
     return i
 
 
+# 测试接口一
 def task_create_task():
     tm = TaskManager()
     task_id = tm.create_task()
@@ -185,6 +177,7 @@ def task_create_task():
         return -1
 
 
+# 测试接口二
 def task_callback_task():
     query_args = {}
     projection_fields = {'_id': False}
@@ -198,6 +191,7 @@ def task_callback_task():
         return -1
 
 
+# 创建一个任务
 def task_one():
     tm = TaskManager()
     task_id = tm.create_task()
@@ -217,6 +211,7 @@ def task_one():
         return -1
 
 
+# 用进程创建多个任务
 def build_tasks_with_process(total_num, start_num):
     start_time = datetime.datetime.now()
     m_pool = Pool(total_num)
@@ -229,6 +224,7 @@ def build_tasks_with_process(total_num, start_num):
     print("execution_time : ", execution_time)
 
 
+# 用线程创建多个任务
 def build_tasks_with_thread(max_workers, start_num):
     success_num = 0
     start_time = datetime.datetime.now()
@@ -250,17 +246,19 @@ def build_tasks_with_thread(max_workers, start_num):
 
 
 def main():
+    # 连续五次测试
     # result = []
     # for i in range(5):
     #     res = build_tasks_with_thread(1000, 1000)
     #     time.sleep(5)
     #     result.append(res)
     # print(result)
-
+    
+    # 一次测试，输出结果
     result = build_tasks_with_thread(100, 100)
     print(result)
 
-    # build_tasks_with_process(500, 500)
+    # 测试pqs
     # print("/api/v2/task/new ---- qps :", get_create_task_qps())
     # print("/api/v2/result ---- qps :", get_callback_task_qps())
 
